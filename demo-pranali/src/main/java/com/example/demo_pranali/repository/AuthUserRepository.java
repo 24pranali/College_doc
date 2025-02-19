@@ -8,5 +8,6 @@ import java.util.Optional;
 // This interface interacts with the database
 // No need to write SQL queries.
 public interface AuthUserRepository extends JpaRepository<AuthUser, Long> {
-    Optional<AuthUser> findByEmail(String email); // Find user by email for login
+    Optional<AuthUser> findByEmail(String email);
+    Optional<AuthUser> findByEmailOrName(String email, String name); // Find user by email for login
 }

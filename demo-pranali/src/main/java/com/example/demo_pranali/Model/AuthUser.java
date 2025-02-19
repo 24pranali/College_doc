@@ -1,6 +1,9 @@
 package com.example.demo_pranali.Model;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
@@ -29,6 +32,18 @@ public class AuthUser {
     public AuthUser() {
         this.role = Role.STUDENT ; //default role is student
     }
+    @JsonCreator
+    public AuthUser(
+            @JsonProperty("name") String name,
+            @JsonProperty("email") String email,
+            @JsonProperty("password") String password,
+            @JsonProperty("role") Role role) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.role = role;
+    }
+
 
 
 
@@ -37,9 +52,8 @@ public class AuthUser {
         return role;
     }
 
-    public String getPassword() {
-        return password;
-    }
+    @JsonIgnore // Prevent password from being included in API response
+    public String getPassword() { return password; }
 
     public String getEmail() {
         return email;
@@ -55,6 +69,7 @@ public class AuthUser {
 
     // Setters
 
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -68,8 +83,7 @@ public class AuthUser {
     }
 
     public void setPassword(String password) {
-        //this.password = password;
-        this.password=new BCryptPasswordEncoder().encode(password);
+        this.password = password;  // Don't encode here, encode only in AuthUserService
     }
 
     public void setRole(Role role) {
