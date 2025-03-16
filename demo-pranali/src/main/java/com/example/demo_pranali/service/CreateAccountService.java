@@ -15,8 +15,6 @@ public class CreateAccountService
 
     private CreateAccountRepository repository;
 
-
-    // Save student details
     public CreateAccount saveStudent(CreateAccount student)
     {
         return repository.save(student);
