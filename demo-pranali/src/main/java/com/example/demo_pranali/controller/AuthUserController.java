@@ -11,7 +11,8 @@ import java.util.*;
 @RestController
 @RequestMapping("/auth") // base path for all API
 @CrossOrigin("http://localhost:5173")
-public class AuthUserController {
+public class AuthUserController
+{
 
     private final AuthUserService authUserService;
     private final AuthUserRepository authUserRepository;

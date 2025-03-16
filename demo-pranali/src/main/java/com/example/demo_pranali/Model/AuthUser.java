@@ -18,7 +18,8 @@ public class AuthUser {
     private String password;
 
 
-    public AuthUser(Long id, String name, String email, String password, Role role) {
+    public AuthUser(Long id, String name, String email, String password, Role role)
+    {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -30,6 +31,7 @@ public class AuthUser {
     private Role role;
 
     public AuthUser() {
+
         this.role = Role.STUDENT ; //default role is student
     }
     @JsonCreator
@@ -49,6 +51,7 @@ public class AuthUser {
 
     // Getters
     public Role getRole() {
+
         return role;
     }
 
