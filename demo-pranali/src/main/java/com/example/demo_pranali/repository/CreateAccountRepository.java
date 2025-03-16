@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface CreateAccountRepository extends JpaRepository<CreateAccount , Long>
 {
 //    CreateAccount findByRollNo(String rollNo); // Fetch student by Roll No
-
+Optional<CreateAccount> findByEmail(String email);
     Optional<CreateAccount> findByRollNo(String rollNo);
 
 }

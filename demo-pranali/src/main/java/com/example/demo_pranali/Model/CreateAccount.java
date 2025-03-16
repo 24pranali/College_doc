@@ -9,7 +9,8 @@ public class CreateAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(nullable = false)
+    private String email;
     @Column(nullable = false)
     private String name;
 
@@ -29,8 +30,8 @@ public class CreateAccount {
     public CreateAccount() {}
 
 
-    public CreateAccount(String name, String year, String branch, String rollNo, String prnNo)
-    {
+    public CreateAccount(String email,String name, String year, String branch, String rollNo, String prnNo)
+    { this.email=email;
         this.name = name;
         this.year = year;
         this.branch = branch;
@@ -46,6 +47,14 @@ public class CreateAccount {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getName() {

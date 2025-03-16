@@ -29,6 +29,9 @@ public class CreateAccountController
     public Optional<CreateAccount> getStudentByRollNo(@PathVariable String rollNo) {
         return createAccountService.getStudentByRollNo(rollNo);
     }
-
+    @GetMapping("/email/{email}")
+    public Optional<CreateAccount> getStudentByEmail(@PathVariable String email) {
+        return createAccountService.getStudentByEmail(email);
+    }
 
 }
