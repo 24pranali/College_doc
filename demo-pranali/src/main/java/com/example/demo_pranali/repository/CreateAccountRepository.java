@@ -10,5 +10,6 @@ public interface CreateAccountRepository extends JpaRepository<CreateAccount , L
 //    CreateAccount findByRollNo(String rollNo); // Fetch student by Roll No
 Optional<CreateAccount> findByEmail(String email);
     Optional<CreateAccount> findByRollNo(String rollNo);
+    Optional<CreateAccount> findByPrnNo(String prnNo);
 
 }

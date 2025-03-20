@@ -2,6 +2,8 @@ package com.example.demo_pranali.Model;
 
 import jakarta.persistence.*;
 
+import java.util.Optional;
+
 @Entity
 @Table(name = "StudentInfo")
 public class CreateAccount {
@@ -96,4 +98,6 @@ public class CreateAccount {
     public void setPrnNo(String prnNo) {
         this.prnNo = prnNo;
     }
+
+
 }
