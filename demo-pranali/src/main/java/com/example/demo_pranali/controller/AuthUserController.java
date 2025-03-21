@@ -107,5 +107,10 @@ public class AuthUserController
             return ResponseEntity.status(401).body("❌ Invalid Credentials!");
         }
     }
+    @GetMapping("/auth_users")
+    public ResponseEntity<List<AuthUser>> getAllStudents() {
+        List<AuthUser> students = authUserRepository.findAll();
+        return ResponseEntity.ok(students);
+    }
 
 }

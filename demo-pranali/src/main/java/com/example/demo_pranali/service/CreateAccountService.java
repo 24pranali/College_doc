@@ -15,6 +15,13 @@ public class CreateAccountService
 
     private CreateAccountRepository repository;
 
+<<<<<<< HEAD
+=======
+    public Optional<CreateAccount> getStudentByEmail(String email) {
+        return repository.findByEmail(email);
+    }
+    // Save student details
+>>>>>>> 648ed6c5f969d2a9cee6ad4c05515acd06136142
     public CreateAccount saveStudent(CreateAccount student)
     {
         return repository.save(student);
