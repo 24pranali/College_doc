@@ -15,18 +15,44 @@ public class DocumentRequestController {
     @Autowired
     private DocumentRequestService documentRequestService;
 
-    // Endpoint to create a new document request
+    // Create a new document request
     @PostMapping("/create")
     public DocumentRequest createRequest(
             @RequestParam String prnNo,
             @RequestParam String documentType,
-            @RequestParam String reason) {
-        return documentRequestService.createRequest(prnNo, documentType, reason);
+            @RequestParam String reason,
+            @RequestParam(required = false) Boolean status, // Can be null
+            @RequestParam String document) {
+
+        if (status == null) {
+            status = false; // Default to false (Pending)
+        }
+
+        return documentRequestService.createRequest(prnNo, documentType, reason, status, document);
     }
 
-    // Endpoint to get all requests for a student by PRN
+    // Get all document requests
+    @GetMapping
+    public List<DocumentRequest> getAllRequests() {
+        return documentRequestService.getAllRequests();
+    }
+
+    // Get all requests for a specific PRN
     @GetMapping("/{prnNo}")
     public List<DocumentRequest> getRequestsByPrn(@PathVariable String prnNo) {
         return documentRequestService.getRequestsByPrn(prnNo);
     }
+
+    @PutMapping("/{id}/approve")
+    public DocumentRequest approveRequest(@PathVariable Long id) {
+        return documentRequestService.updateRequestStatusById(id, true);  // true = Approved
+    }
+
+    // Reject a specific document request by ID
+    @PutMapping("/{id}/reject")
+    public DocumentRequest rejectRequest(@PathVariable Long id) {
+        return documentRequestService.updateRequestStatusById(id, false);  // false = Rejected
+    }
+
 }
+
