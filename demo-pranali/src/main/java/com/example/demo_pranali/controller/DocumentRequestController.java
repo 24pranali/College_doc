@@ -21,12 +21,12 @@ public class DocumentRequestController {
             @RequestParam String prnNo,
             @RequestParam String documentType,
             @RequestParam String reason,
-            @RequestParam(required = false) Boolean status, // Can be null
+            @RequestParam(required = false) Integer status, // Can be null
             @RequestParam String document) {
 
-        if (status == null) {
-            status = false; // Default to false (Pending)
-        }
+         if (status == null) {
+        status = 1; // Default to Pending
+    }
 
         return documentRequestService.createRequest(prnNo, documentType, reason, status, document);
     }
@@ -45,14 +45,14 @@ public class DocumentRequestController {
 
     @PutMapping("/{id}/approve")
     public DocumentRequest approveRequest(@PathVariable Long id) {
-        return documentRequestService.updateRequestStatusById(id, true);  // true = Approved
+        return documentRequestService.updateRequestStatusById(id, 2); // 2 = Approved
     }
 
-    // Reject a specific document request by ID
     @PutMapping("/{id}/reject")
     public DocumentRequest rejectRequest(@PathVariable Long id) {
-        return documentRequestService.updateRequestStatusById(id, false);  // false = Rejected
+        return documentRequestService.updateRequestStatusById(id, 3); // 3 = Rejected
     }
+
 
 }
 

@@ -20,8 +20,11 @@ public class DocumentRequest {
     @Column(nullable = false)
     private String reason;
 
-    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
-    private boolean status = false;  // false = Pending/Rejected, true = Approved
+//    @Column(columnDefinition = "TINYINT(1)")
+//    private boolean status = false;
+@Column(nullable = true)
+private Integer status;  // 1 = Pending, 2 = Approved, 3 = Rejected
+
 
     @Column
     private String document; // Path or URL of the document sent by admin
@@ -31,7 +34,7 @@ public class DocumentRequest {
     }
 
     // Parameterized Constructor
-    public DocumentRequest(CreateAccount student, String documentType, String reason, boolean status, String document) {
+    public DocumentRequest(CreateAccount student, String documentType, String reason, int status, String document) {
         this.student = student;
         this.documentType = documentType;
         this.reason = reason;
@@ -72,11 +75,12 @@ public class DocumentRequest {
         this.reason = reason;
     }
 
-    public boolean isStatus() {
+    public Integer getStatus() {
         return status;
     }
 
-    public void setStatus(boolean status) {
+
+    public void setStatus(int status) {
         this.status = status;
     }
 
@@ -89,13 +93,15 @@ public class DocumentRequest {
     }
 
     //  Add this method to return status as a String ("Approved" / "Pending")
-    public String getStatusString()
-    {
-        return status ? "Approved" : "Pending";  // false = Pending, true = Approved
+    public String getStatusString() {
+        if (status == null || status == 1) return "Pending";
+        if (status == 2) return "Approved";
+        if (status == 3) return "Rejected";
+        return "Unknown";
     }
-    public void setStatus(Boolean status) {
-        this.status = (status != null) ? status : false;  // Default to false if null
-    }
+//    public void setStatus(Boolean status) {
+//        this.status = (status != null) ? status : false;  // Default to false if null
+//    }
 
 
 
