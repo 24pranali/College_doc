@@ -1,6 +1,7 @@
 package com.example.demo_pranali.controller;
 
 import com.example.demo_pranali.Model.DocumentRequest;
+import com.example.demo_pranali.repository.DocumentRequestRepository;
 import com.example.demo_pranali.service.DocumentRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -98,4 +99,39 @@ public class DocumentRequestController {
     public DocumentRequest rejectRequest(@PathVariable Long id) {
         return documentRequestService.updateRequestStatusById(id, 3); // 3 = Rejected
     }
+    @PostMapping("/document-requests/{id}/generate-pdf")
+    public ResponseEntity<String> generatePdf(@PathVariable Long id) {
+        boolean success = documentRequestService.generateAndUploadPDF(id);
+        if (success) {
+            return ResponseEntity.ok("PDF generated and saved.");
+        } else {
+            return ResponseEntity.badRequest().body("Failed to generate PDF. Make sure request is approved.");
+        }
+    }
+
+    @GetMapping("/document-requests/{id}/download")
+    public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
+        byte[] file = documentRequestService.getDocumentFile(id);
+        if (file == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=Bonafide_Certificate.pdf")
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .body(file);
+    }
+    @PostMapping("/{id}/generate-and-upload")
+    public ResponseEntity<String> generateAndUploadPDF(@PathVariable Long id) {
+        boolean success = documentRequestService.generateAndUploadPDF(id);
+        if (success) {
+            return ResponseEntity.ok("PDF generated and uploaded.");
+        } else {
+            return ResponseEntity.badRequest().body("PDF generation failed.");
+        }
+    }
+
+
+
+
 }

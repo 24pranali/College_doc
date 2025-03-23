@@ -72,8 +72,9 @@ public class DocumentRequestService {
     // ✅ Retrieve document file data by request ID
     public byte[] getDocumentFile(Long id) {
         Optional<DocumentRequest> requestOpt = documentRequestRepository.findById(id);
-        return requestOpt.map(DocumentRequest::getDocumentData).orElse(null);
+        return requestOpt.map(DocumentRequest::getDocumentFile).orElse(null);
     }
+
 
 
 
@@ -95,6 +96,29 @@ public class DocumentRequestService {
         request.setStatus(newStatus);
         return documentRequestRepository.save(request);
     }
+    @Autowired
+    private PdfGeneratorService pdfGeneratorService;
+
+    public boolean generateAndUploadPDF(Long requestId) {
+        Optional<DocumentRequest> requestOpt = documentRequestRepository.findById(requestId);
+        if (requestOpt.isEmpty()) return false;
+
+        DocumentRequest request = requestOpt.get();
+        if (request.getStatus() != 2) return false; // Only generate for approved requests
+
+        String studentName = request.getStudent().getName();
+        String prnNo = request.getStudent().getPrnNo();
+        String docType = request.getDocumentType();
+
+        byte[] pdfBytes = pdfGeneratorService.generateBonafideCertificate(studentName, prnNo, docType);
+
+        request.setDocumentFile(pdfBytes);
+        request.setDocumentName("Bonafide_Certificate.pdf");
+        documentRequestRepository.save(request);
+        return true;
+    }
+
+
 
 
 
