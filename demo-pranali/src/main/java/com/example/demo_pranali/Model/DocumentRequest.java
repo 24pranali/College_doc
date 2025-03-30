@@ -36,7 +36,20 @@ public class DocumentRequest {
     @Column(name = "document_type_stored")
     private String documentTypeStored;
 
-    // ✅ Constructors
+    @Lob
+    @Column(name = "verification_document", columnDefinition = "LONGBLOB")
+    private byte[] verificationDocument;
+
+    @Column(name = "verification_document_name")
+    private String verificationDocumentName;
+
+    @Column(name = "verification_document_type")
+    private String verificationDocumentType;
+
+
+
+
+    //  Constructors
     public DocumentRequest() {}
 
     public DocumentRequest(CreateAccount student, String documentType, String reason, int status, String documentName, String documentTypeStored, byte[] documentFile) {
@@ -49,25 +62,44 @@ public class DocumentRequest {
         this.documentFile = documentFile;
     }
 
-    // ✅ Set file from MultipartFile
-    public void setDocumentFile(MultipartFile file) throws IOException {
+    //  Set file from MultipartFile
+    public void setDocumentFile(MultipartFile file) throws IOException
+    {
         this.documentName = file.getOriginalFilename();
         this.documentTypeStored = file.getContentType();
         this.documentFile = file.getBytes();
     }
 
-    // ✅ Getters & Setters
-    public Long getId() { return id; }
+    //  Getters & Setters
+    public Long getId()
+    {
+        return id;
+    }
 
-    public void setId(Long id) { this.id = id; }
+    public void setId(Long id)
+    {
+        this.id = id;
+    }
 
-    public CreateAccount getStudent() { return student; }
+    public CreateAccount getStudent()
+    {
+        return student;
+    }
 
-    public void setStudent(CreateAccount student) { this.student = student; }
+    public void setStudent(CreateAccount student)
+    {
+        this.student = student;
+    }
 
-    public String getDocumentType() { return documentType; }
+    public String getDocumentType()
+    {
+        return documentType;
+    }
 
-    public void setDocumentType(String documentType) { this.documentType = documentType; }
+    public void setDocumentType(String documentType)
+    {
+         this.documentType = documentType;
+    }
 
     public String getReason() { return reason; }
 
@@ -89,10 +121,47 @@ public class DocumentRequest {
 
     public void setDocumentTypeStored(String documentTypeStored) { this.documentTypeStored = documentTypeStored; }
 
-    public String getStatusString() {
-        if (status == null || status == 1) return "Pending";
-        if (status == 2) return "Approved";
-        if (status == 3) return "Rejected";
+    public String getStatusString()
+    {
+        if (status == null || status == 1)
+        {
+            return "Pending";
+        }
+        if (status == 2)
+        {
+            return "Approved";
+        }
+        if (status == 3)
+        {
+            return "Rejected";
+        }
         return "Unknown";
     }
+
+    public byte[] getVerificationDocument() {
+        return verificationDocument;
+    }
+
+    public void setVerificationDocument(byte[] verificationDocument) {
+        this.verificationDocument = verificationDocument;
+    }
+
+    public String getVerificationDocumentType() {
+        return verificationDocumentType;
+    }
+
+    public void setVerificationDocumentType(String verificationDocumentType) {
+        this.verificationDocumentType = verificationDocumentType;
+    }
+
+    public String getVerificationDocumentName() {
+        return verificationDocumentName;
+    }
+
+    public void setVerificationDocumentName(String verificationDocumentName) {
+        this.verificationDocumentName = verificationDocumentName;
+    }
+
+
+
 }

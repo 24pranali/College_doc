@@ -23,7 +23,11 @@ public class DocumentRequestController {
     @Autowired
     private DocumentRequestService documentRequestService;
 
-    // ✅ 1. Create Document Request (with optional file upload)
+    @Autowired
+    private DocumentRequestRepository documentRequestRepository;
+
+
+    //  1. Create Document Request (with optional file upload)
     @PostMapping("/create")
     public ResponseEntity<DocumentRequest> createRequest(
             @RequestParam String prnNo,
@@ -45,7 +49,7 @@ public class DocumentRequestController {
     }
 
 
-    // ✅ 2. Upload Document (Admin uploads file separately)
+    //  2. Upload Document (Admin uploads file separately)
     @PostMapping("/upload/{id}")
     public ResponseEntity<String> uploadDocument(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
         try {
@@ -60,56 +64,8 @@ public class DocumentRequestController {
         }
     }
 
-
-    // ✅ 3. Download Document
+    // 3. Download Document (PDF) student
     @GetMapping("/{id}/download")
-    public ResponseEntity<byte[]> downloadDocument(@PathVariable Long id) {
-        byte[] documentData = documentRequestService.getDocumentFile(id);
-
-        if (documentData == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=document.pdf")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(documentData);
-    }
-
-    // ✅ 3. Get all document requests
-    @GetMapping
-    public List<DocumentRequest> getAllRequests() {
-        return documentRequestService.getAllRequests();
-    }
-
-    // ✅ 4. Get all requests for a specific PRN
-    @GetMapping("/{prnNo}")
-    public List<DocumentRequest> getRequestsByPrn(@PathVariable String prnNo) {
-        return documentRequestService.getRequestsByPrn(prnNo);
-    }
-
-    // ✅ 5. Approve Request
-    @PutMapping("/{id}/approve")
-    public DocumentRequest approveRequest(@PathVariable Long id) {
-        return documentRequestService.updateRequestStatusById(id, 2); // 2 = Approved
-    }
-
-    // ✅ 6. Reject Request
-    @PutMapping("/{id}/reject")
-    public DocumentRequest rejectRequest(@PathVariable Long id) {
-        return documentRequestService.updateRequestStatusById(id, 3); // 3 = Rejected
-    }
-    @PostMapping("/document-requests/{id}/generate-pdf")
-    public ResponseEntity<String> generatePdf(@PathVariable Long id) {
-        boolean success = documentRequestService.generateAndUploadPDF(id);
-        if (success) {
-            return ResponseEntity.ok("PDF generated and saved.");
-        } else {
-            return ResponseEntity.badRequest().body("Failed to generate PDF. Make sure request is approved.");
-        }
-    }
-
-    @GetMapping("/document-requests/{id}/download")
     public ResponseEntity<byte[]> downloadPdf(@PathVariable Long id) {
         byte[] file = documentRequestService.getDocumentFile(id);
         if (file == null) {
@@ -120,7 +76,45 @@ public class DocumentRequestController {
                 .header("Content-Disposition", "attachment; filename=Bonafide_Certificate.pdf")
                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                 .body(file);
+//        return ResponseEntity.ok()
+//                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + file.getDocumentName())
+//                .contentType(MediaType.APPLICATION_PDF)
+//                .body(file);
+
+
     }
+
+
+    //  3. Get all document requests
+    @GetMapping
+    public List<DocumentRequest> getAllRequests()
+    {
+        return documentRequestService.getAllRequests();
+    }
+
+
+    //  4. Get all requests for a specific PRN
+    @GetMapping("/{prnNo}")
+    public List<DocumentRequest> getRequestsByPrn(@PathVariable String prnNo)
+    {
+        return documentRequestService.getRequestsByPrn(prnNo);
+    }
+
+    //  5. Approve Request
+    @PutMapping("/{id}/approve")
+    public DocumentRequest approveRequest(@PathVariable Long id)
+    {
+        return documentRequestService.updateRequestStatusById(id, 2); // 2 = Approved
+    }
+
+    //  6. Reject Request
+    @PutMapping("/{id}/reject")
+    public DocumentRequest rejectRequest(@PathVariable Long id)
+    {
+        return documentRequestService.updateRequestStatusById(id, 3); // 3 = Rejected
+    }
+
+    // 7. Generate & Upload PDF (admin)
     @PostMapping("/{id}/generate-and-upload")
     public ResponseEntity<String> generateAndUploadPDF(@PathVariable Long id) {
         boolean success = documentRequestService.generateAndUploadPDF(id);
@@ -131,7 +125,43 @@ public class DocumentRequestController {
         }
     }
 
+    // ✅ Upload verification document (Student)
+    @PostMapping("/{id}/upload-verification")
+    public ResponseEntity<String> uploadVerificationDocument(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            boolean uploaded = documentRequestService.uploadVerificationDocument(id, file);
+            if (uploaded) {
+                return ResponseEntity.ok("Verification document uploaded successfully!");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Document request not found.");
+            }
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error uploading verification document.");
+        }
+    }
+
+    @GetMapping("/{id}/download-verification")
+    public ResponseEntity<byte[]> downloadVerificationDocument(@PathVariable Long id) {
+        Optional<DocumentRequest> requestOpt = documentRequestRepository.findById(id);
+        if (requestOpt.isEmpty() || requestOpt.get().getVerificationDocument() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        DocumentRequest request = requestOpt.get();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + request.getVerificationDocumentName())
+                .contentType(MediaType.parseMediaType(request.getVerificationDocumentType()))
+                .body(request.getVerificationDocument());
+    }
+
+
+
+
+
 
 
 
 }
+

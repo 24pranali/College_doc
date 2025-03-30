@@ -119,11 +119,25 @@ public class DocumentRequestService {
     }
 
 
+    public boolean uploadVerificationDocument(Long id, MultipartFile file) throws IOException {
+        Optional<DocumentRequest> documentRequestOpt = documentRequestRepository.findById(id);
+        if (documentRequestOpt.isPresent()) {
+            DocumentRequest documentRequest = documentRequestOpt.get();
+            documentRequest.setVerificationDocument(file.getBytes());
+            documentRequest.setVerificationDocumentName(file.getOriginalFilename());
+            documentRequest.setVerificationDocumentType(file.getContentType());
+            documentRequestRepository.save(documentRequest);
+            return true;
+        } else {
+            return false; // Request not found
+        }
+    }
 
 
 
 
 }
+
 
 
 
