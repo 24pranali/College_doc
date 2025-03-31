@@ -1,5 +1,6 @@
 package com.example.demo_pranali.Model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -161,7 +162,10 @@ public class DocumentRequest {
     public void setVerificationDocumentName(String verificationDocumentName) {
         this.verificationDocumentName = verificationDocumentName;
     }
-
+    @JsonProperty("verificationDocumentAvailable")
+    public boolean isVerificationDocumentAvailable() {
+        return this.verificationDocument != null;
+    }
 
 
 }
