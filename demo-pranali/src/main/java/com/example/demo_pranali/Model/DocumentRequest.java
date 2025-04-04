@@ -48,8 +48,6 @@ public class DocumentRequest {
     private String verificationDocumentType;
 
 
-
-
     //  Constructors
     public DocumentRequest() {}
 

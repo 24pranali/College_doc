@@ -12,8 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/document-requests")
@@ -155,6 +154,35 @@ public class DocumentRequestController {
                 .contentType(MediaType.parseMediaType(request.getVerificationDocumentType()))
                 .body(request.getVerificationDocument());
     }
+    // 8. Get statistics summary for admin dashboard
+    @GetMapping("/stats")
+    public Map<String, Integer> getRequestStats() {
+        List<DocumentRequest> all = documentRequestService.getAllRequests();
+
+        int total = all.size();
+        int pending = 0, approved = 0, rejected = 0;
+
+        Set<String> uniquePrns = new HashSet<>();
+
+        for (DocumentRequest dr : all) {
+            uniquePrns.add(dr.getStudent().getPrnNo());
+
+            if (dr.getStatus() == 1) pending++;
+            else if (dr.getStatus() == 2) approved++;
+            else if (dr.getStatus() == 3) rejected++;
+        }
+
+        Map<String, Integer> stats = new HashMap<>();
+        stats.put("totalRequests", total);
+        stats.put("pending", pending);
+        stats.put("approved", approved);
+        stats.put("rejected", rejected);
+        stats.put("totalStudents", uniquePrns.size());
+
+        return stats;
+    }
+
+
 
 
 
