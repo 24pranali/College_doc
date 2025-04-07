@@ -1,5 +1,6 @@
 package com.example.demo_pranali.Model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,6 +47,36 @@ public class DocumentRequest {
     @Column(name = "verification_document_type")
     private String verificationDocumentType;
 
+
+
+    private Boolean isPdfGenerated = false;
+    private Boolean isPdfUploaded = false;
+
+    public Boolean getPdfGenerated() {
+        return isPdfGenerated;
+    }
+
+    public void setPdfGenerated(Boolean pdfGenerated) {
+        isPdfGenerated = pdfGenerated;
+    }
+
+
+    public Boolean getPdfUploaded() {
+        return isPdfUploaded;
+    }
+
+    public void setPdfUploaded(Boolean pdfUploaded) {
+        isPdfUploaded = pdfUploaded;
+    }
+
+    private Boolean isFinalized = false;
+    public Boolean getFinalized() {
+        return isFinalized;
+    }
+
+    public void setFinalized(Boolean finalized) {
+        isFinalized = finalized;
+    }
 
 
 
@@ -135,8 +166,10 @@ public class DocumentRequest {
         {
             return "Rejected";
         }
+
         return "Unknown";
     }
+
 
     public byte[] getVerificationDocument() {
         return verificationDocument;
@@ -160,6 +193,26 @@ public class DocumentRequest {
 
     public void setVerificationDocumentName(String verificationDocumentName) {
         this.verificationDocumentName = verificationDocumentName;
+    }
+
+    //useful for temporarily storing generated files before they're finalized and saved into documentFile.
+    @JsonProperty("verificationDocumentAvailable")
+    public boolean isVerificationDocumentAvailable() {
+        return this.verificationDocument != null;
+    }
+
+//    @Transient
+//    private byte[] generatedPdf;
+@Lob
+@Column(name = "generated_pdf", columnDefinition = "LONGBLOB")
+private byte[] generatedPdf;
+
+    public byte[] getGeneratedPdf() {
+        return generatedPdf;
+    }
+
+    public void setGeneratedPdf(byte[] generatedPdf) {
+        this.generatedPdf = generatedPdf;
     }
 
 

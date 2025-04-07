@@ -9,8 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-
-
 import java.util.List;
 import java.util.Optional;
 
@@ -23,25 +21,13 @@ public class DocumentRequestService {
     @Autowired
     private CreateAccountRepository createAccountRepository;
 
-//    // Create a new document request
-//    public DocumentRequest createRequest(String prnNo, String documentType, String reason,int status, String document) {
-//        Optional<CreateAccount> studentOpt = createAccountRepository.findByPrnNo(prnNo);
-//
-//        if (studentOpt.isPresent()) {
-//            DocumentRequest request = new DocumentRequest(studentOpt.get(), documentType, reason, status, document);
-//            return documentRequestRepository.save(request);
-//        } else {
-//            throw new RuntimeException("Student with PRN " + prnNo + " not found!");
-//        }
-//    }
+    @Autowired
+    private PdfGeneratorService pdfGeneratorService;
 
     // ✅ Create a new document request (with optional file)
     public DocumentRequest createRequest(String prnNo, String documentType, String reason, int status, MultipartFile file) throws IOException {
-        Optional<CreateAccount> studentOpt = createAccountRepository.findByPrnNo(prnNo);
-        if (studentOpt.isEmpty()) {
-            throw new RuntimeException("Student with PRN " + prnNo + " not found");
-        }
-        CreateAccount student = studentOpt.get();
+        CreateAccount student = createAccountRepository.findByPrnNo(prnNo)
+                .orElseThrow(() -> new RuntimeException("Student with PRN " + prnNo + " not found"));
 
         DocumentRequest documentRequest = new DocumentRequest();
         documentRequest.setStudent(student);
@@ -49,108 +35,199 @@ public class DocumentRequestService {
         documentRequest.setReason(reason);
         documentRequest.setStatus(status);
 
-        if (file != null) {
-            documentRequest.setDocumentFile(file);
+
+        if (file != null && !file.isEmpty()) {
+            documentRequest.setDocumentFile(file.getBytes());
+            documentRequest.setDocumentName(file.getOriginalFilename());
+            documentRequest.setDocumentTypeStored(file.getContentType()); // ✅ store content type separately
+           // documentRequest.setDocumentType(file.getContentType());
+
         }
 
         return documentRequestRepository.save(documentRequest);
     }
 
-    // ✅ Upload a document separately
+    // ✅ Upload document separately
     public boolean uploadDocument(Long id, MultipartFile file) throws IOException {
-        Optional<DocumentRequest> documentRequestOpt = documentRequestRepository.findById(id);
-        if (documentRequestOpt.isPresent()) {
-            DocumentRequest documentRequest = documentRequestOpt.get();
-            documentRequest.setDocumentFile(file);
-            documentRequestRepository.save(documentRequest);
-            return true;
-        } else {
-            return false; // Request not found
-        }
+        DocumentRequest request = getRequestById(id);
+        if (request == null || file.isEmpty()) return false;
+
+        request.setDocumentFile(file.getBytes());
+        request.setDocumentName(file.getOriginalFilename());
+        //request.setDocumentType(file.getContentType());
+        request.setDocumentTypeStored(file.getContentType());
+
+
+        saveRequest(request);
+        return true;
     }
 
-    // ✅ Retrieve document file data by request ID
-    public byte[] getDocumentFile(Long id) {
-        Optional<DocumentRequest> requestOpt = documentRequestRepository.findById(id);
-        return requestOpt.map(DocumentRequest::getDocumentFile).orElse(null);
-    }
-
-
-
-
+    // ✅ Get all requests
     public List<DocumentRequest> getAllRequests() {
         return documentRequestRepository.findAll();
     }
 
+    // ✅ Get request by ID
+    public DocumentRequest getRequestById(Long id) {
+        return documentRequestRepository.findById(id).orElse(null);
+    }
 
-    // Get all requests for a student by PRN for status
+    // ✅ Save request
+    public void saveRequest(DocumentRequest request) {
+        documentRequestRepository.save(request);
+    }
+
+    // ✅ Get requests by PRN
     public List<DocumentRequest> getRequestsByPrn(String prnNo) {
         return documentRequestRepository.findByStudent_PrnNo(prnNo);
     }
 
-    // ✅ Approve/Reject a request by ID
+    // ✅ Get document file (raw bytes)
+    public byte[] getDocumentFile(Long id) {
+        DocumentRequest request = getRequestById(id);
+        return (request != null) ? request.getDocumentFile() : null;
+    }
+
+    // ✅ Update status (approve/reject)
     public DocumentRequest updateRequestStatusById(Long id, int newStatus) {
-        DocumentRequest request = documentRequestRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
+        DocumentRequest request = getRequestById(id);
+        if (request == null) throw new RuntimeException("Request not found");
 
         request.setStatus(newStatus);
         return documentRequestRepository.save(request);
     }
-    @Autowired
-    private PdfGeneratorService pdfGeneratorService;
 
-    public boolean generateAndUploadPDF(Long requestId) {
-        Optional<DocumentRequest> requestOpt = documentRequestRepository.findById(requestId);
-        if (requestOpt.isEmpty()) return false;
+    // ✅ Upload verification document
+    public boolean uploadVerificationDocument(Long id, MultipartFile file) throws IOException {
+        DocumentRequest request = getRequestById(id);
+        if (request == null || file.isEmpty()) return false;
 
-        DocumentRequest request = requestOpt.get();
-        if (request.getStatus() != 2) return false; // Only generate for approved requests
+        // ✅ ADD CONTENT TYPE VALIDATION HERE
+        String contentType = file.getContentType();
+        if (!List.of("application/pdf", "image/jpeg", "image/png").contains(contentType)) {
+            throw new IllegalArgumentException("Only PDF and image files (JPG, PNG) are allowed");
+        }
 
-        String studentName = request.getStudent().getName();
-        String prnNo = request.getStudent().getPrnNo();
-        String docType = request.getDocumentType();
 
-        byte[] pdfBytes = pdfGeneratorService.generateBonafideCertificate(studentName, prnNo, docType);
+        request.setVerificationDocument(file.getBytes());
+        request.setVerificationDocumentName(file.getOriginalFilename());
+        request.setVerificationDocumentType(file.getContentType());
 
-        request.setDocumentFile(pdfBytes);
-        request.setDocumentName("Bonafide_Certificate.pdf");
-        documentRequestRepository.save(request);
+        saveRequest(request);
         return true;
     }
+    //  Generate and upload PDF after approval
+    //final save after approval
 
+//    public boolean generateAndUploadPDF(Long requestId) {
+//        DocumentRequest request = getRequestById(requestId);
+//        if (request == null || request.getStatus() != 2) return false;
+//
+//        byte[] pdfBytes = generatePdfForRequest(request); // ✅ Reuse main logic
+//
+//        request.setDocumentFile(pdfBytes);
+//
+//        String fileName = request.getDocumentType().substring(0, 1).toUpperCase() +
+//                request.getDocumentType().substring(1).toLowerCase().replace(" ", "_") + ".pdf";
+//
+//        request.setDocumentName(fileName);
+//        request.setDocumentTypeStored("application/pdf");
+//
+//        saveRequest(request);
+//        return true;
+//    }
 
-    public boolean uploadVerificationDocument(Long id, MultipartFile file) throws IOException {
-        Optional<DocumentRequest> documentRequestOpt = documentRequestRepository.findById(id);
-        if (documentRequestOpt.isPresent()) {
-            DocumentRequest documentRequest = documentRequestOpt.get();
-            documentRequest.setVerificationDocument(file.getBytes());
-            documentRequest.setVerificationDocumentName(file.getOriginalFilename());
-            documentRequest.setVerificationDocumentType(file.getContentType());
-            documentRequestRepository.save(documentRequest);
+    public boolean generateAndUploadPDF(Long requestId) {
+        try {
+            DocumentRequest request = getRequestById(requestId);
+            if (request == null) {
+                System.out.println("Request not found for ID: " + requestId);
+                return false;
+            }
+            if (request.getStatus() != 2) {
+                System.out.println("Request not approved. Status: " + request.getStatus());
+                return false;
+            }
+
+            System.out.println("Generating PDF for type: " + request.getDocumentType());
+
+            byte[] pdfBytes = generatePdfForRequest(request);
+            if (pdfBytes == null || pdfBytes.length == 0) {
+                System.out.println("Generated PDF is empty or null.");
+                return false;
+            }
+
+            request.setDocumentFile(pdfBytes);
+
+            String fileName = request.getDocumentType().substring(0, 1).toUpperCase() +
+                    request.getDocumentType().substring(1).toLowerCase().replace(" ", "_") + ".pdf";
+
+            request.setDocumentName(fileName);
+            request.setDocumentTypeStored("application/pdf");
+
+            saveRequest(request);
+            System.out.println("PDF generated and saved successfully for requestId: " + requestId);
             return true;
-        } else {
-            return false; // Request not found
+        } catch (Exception e) {
+            System.out.println("❌ Error during PDF generation: " + e.getMessage());
+            e.printStackTrace();  // This will help you see the full stack trace in console
+            return false;
         }
     }
 
 
 
+    // ✅ Upload generated PDF and mark approved
+    public boolean uploadFinal(Long id) {
+        DocumentRequest request = getRequestById(id);
+        if (request == null || request.getDocumentFile() == null) return false;
+
+        request.setStatus(2); // Approved
+        saveRequest(request);
+        return true;
+    }
+
+    // ✅ Upload generated PDF without changing status
+    public boolean uploadFinalWithoutStatusChange(Long id) {
+        DocumentRequest request = getRequestById(id);
+        if (request == null || request.getGeneratedPdf() == null) return false;
+
+        request.setDocumentFile(request.getGeneratedPdf());
+        request.setDocumentName("Document.pdf");
+        request.setDocumentTypeStored("application/pdf");
+
+        System.out.println("Request documentType: " + request.getDocumentType());
+
+        request.setPdfUploaded(true);
+        saveRequest(request);
+        return true;
+    }
+    //pdf is generated based on the doc type
+    //for preview
+    public byte[] generatePdfForRequest(DocumentRequest request) {
+        CreateAccount student = request.getStudent();
+        String type = request.getDocumentType().toLowerCase();
+
+        switch (type) {
+            case "bonafide certificate":
+                return pdfGeneratorService.generateBonafideCertificate(student.getName(), student.getPrnNo(), request.getReason());
+
+            case "hall ticket":
+                String subjects = "Maths,Physics,Chemistry";
+                String[] subjectArray = subjects.split(",");
+                return pdfGeneratorService.generateHallTicket(
+                        student.getName(),
+                        student.getPrnNo(),
+                        "Final Exam",subjectArray
+                         // or any subjects the student has
+                );
+
+            case "leaving certificate":
+                return pdfGeneratorService.generateLeavingCertificate(student.getName(), student.getPrnNo(), student.getBranch(), request.getReason());
+
+            default:
+                throw new IllegalArgumentException("Unsupported document type: " + type);
+        }
+    }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
