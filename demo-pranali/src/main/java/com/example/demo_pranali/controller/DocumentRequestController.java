@@ -209,7 +209,7 @@ public ResponseEntity<String> approveRequest(@PathVariable Long id) {
             request.setGeneratedPdf(pdfBytes);
             request.setDocumentName(request.getDocumentType().replace(" ", "_") + "_generated.pdf");
             request.setDocumentTypeStored("application/pdf");
-          //  request.setDocumentType(request.getDocumentType());
+          // s request.setDocumentType(request.getDocumentType());
             request.setPdfGenerated(true);
             // 🔥 Save it to DB
             documentRequestService.saveRequest(request);
