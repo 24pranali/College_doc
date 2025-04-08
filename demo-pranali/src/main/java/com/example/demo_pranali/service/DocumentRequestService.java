@@ -1,4 +1,6 @@
 package com.example.demo_pranali.service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.example.demo_pranali.Model.CreateAccount;
 import com.example.demo_pranali.Model.DocumentRequest;
@@ -17,12 +19,16 @@ public class DocumentRequestService {
 
     @Autowired
     private DocumentRequestRepository documentRequestRepository;
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private CreateAccountRepository createAccountRepository;
 
     @Autowired
     private PdfGeneratorService pdfGeneratorService;
+
+    private static final Logger logger = LoggerFactory.getLogger(DocumentRequestService.class);
 
     // ✅ Create a new document request (with optional file)
     public DocumentRequest createRequest(String prnNo, String documentType, String reason, int status, MultipartFile file) throws IOException {
@@ -94,8 +100,21 @@ public class DocumentRequestService {
         if (request == null) throw new RuntimeException("Request not found");
 
         request.setStatus(newStatus);
-        return documentRequestRepository.save(request);
+        documentRequestRepository.save(request);
+
+        // 🔔 Send status email
+        String email = request.getStudent().getEmail();
+        logger.info("📧 Sending mail to: {}", email);
+
+        String name = request.getStudent().getName();
+        String docType = request.getDocumentType();
+
+        boolean approved = (newStatus == 2); // 2 = approved, 3 = rejected
+        emailService.sendRequestStatusEmail(email, name, docType, approved);
+
+        return request;
     }
+
 
     // ✅ Upload verification document
     public boolean uploadVerificationDocument(Long id, MultipartFile file) throws IOException {
@@ -156,8 +175,8 @@ public class DocumentRequestService {
                 System.out.println("Generated PDF is empty or null.");
                 return false;
             }
+            request.setGeneratedPdf(pdfBytes); // ✅ Store in temporary field for preview
 
-            request.setDocumentFile(pdfBytes);
 
             String fileName = request.getDocumentType().substring(0, 1).toUpperCase() +
                     request.getDocumentType().substring(1).toLowerCase().replace(" ", "_") + ".pdf";

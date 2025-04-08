@@ -104,26 +104,28 @@ public class DocumentRequestController {
 //    }
 @PutMapping("/{id}/approve")
 public ResponseEntity<String> approveRequest(@PathVariable Long id) {
-    DocumentRequest request = documentRequestService.getRequestById(id);
-
-    if (request == null) {
+    try {
+        documentRequestService.updateRequestStatusById(id, 2);  // ✅ This triggers email sending
+        return ResponseEntity.ok("✅ Request approved and email sent.");
+    } catch (RuntimeException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request not found");
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("❌ Error approving request: " + e.getMessage());
     }
-    if (request.getStatus() != 1) {
-        return ResponseEntity.badRequest().body("Request is already processed.");
-    }
-
-
-    request.setStatus(2); // Only mark as approved
-    documentRequestService.saveRequest(request);
-    return ResponseEntity.ok("✅ Request approved successfully.");
 }
+
 
     //  6. Reject Request
     @PutMapping("/{id}/reject")
-    public DocumentRequest rejectRequest(@PathVariable Long id)
-    {
-        return documentRequestService.updateRequestStatusById(id, 3); // 3 = Rejected
+    public ResponseEntity<String> rejectRequest(@PathVariable Long id) {
+        try {
+            documentRequestService.updateRequestStatusById(id, 3);  // ✅ Will send rejection email
+            return ResponseEntity.ok("❌ Request rejected and email sent.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request not found");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("❌ Error rejecting request: " + e.getMessage());
+        }
     }
 
     // 7. Generate & Upload PDF (admin)
@@ -222,21 +224,30 @@ public ResponseEntity<String> approveRequest(@PathVariable Long id) {
     }
 
 
-@GetMapping("/{id}/view")
-public ResponseEntity<byte[]> viewUploadedPdf(@PathVariable Long id) {
-    DocumentRequest request = documentRequestService.getRequestById(id);
-    if (request == null || request.getDocumentFile() == null) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    @GetMapping("/{id}/view")
+    public ResponseEntity<byte[]> viewUploadedPdf(@PathVariable Long id) {
+        DocumentRequest request = documentRequestService.getRequestById(id);
+        if (request == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        byte[] fileToDisplay = (request.getGeneratedPdf() != null)
+                ? request.getGeneratedPdf()
+                : request.getDocumentFile();
+
+        if (fileToDisplay == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDisposition(ContentDisposition.inline()
+                .filename(request.getDocumentName() != null ? request.getDocumentName() : "Document.pdf")
+                .build());
+
+        return new ResponseEntity<>(fileToDisplay, headers, HttpStatus.OK);
     }
 
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_PDF);
-    headers.setContentDisposition(ContentDisposition.inline()
-            .filename(request.getDocumentName() != null ? request.getDocumentName() : "Uploaded.pdf")
-            .build());
-
-    return new ResponseEntity<>(request.getDocumentFile(), headers, HttpStatus.OK);
-}
 
 
     @PostMapping("/{id}/upload")
