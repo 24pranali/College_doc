@@ -40,4 +40,16 @@ public class EmailService {
         sendEmail(toEmail, subject, message);  // Reuse existing method
     }
 
+    // For sending OTP during account creation
+    public void sendOtpEmail(String toEmail, String otp)
+    {
+        String subject = "📌 OTP for College Portal Account Verification";
+        String message = "Dear Student,\n\n" +
+                "Your One-Time Password (OTP) for account verification is: " + otp + "\n\n" +
+                "This OTP is valid for 10 minutes only.\n\n" +
+                "Regards,\nCollege Admin Team";
+
+        sendEmail(toEmail, subject, message);
+    }
+
 }

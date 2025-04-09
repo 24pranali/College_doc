@@ -216,5 +216,30 @@ private byte[] generatedPdf;
     }
 
 
+    //for history
+    private Boolean isDownloaded = false;
+    public Boolean getDownloaded() {
+        return isDownloaded;
+    }
+
+    public void setDownloaded(Boolean downloaded) {
+        isDownloaded = downloaded;
+    }
+
+    @Column(length = 1000)
+    private String rejectionReason;
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+
+
+
+
 
 }

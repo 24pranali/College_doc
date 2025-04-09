@@ -73,6 +73,10 @@ public class DocumentRequestController {
             return ResponseEntity.notFound().build();
         }
 
+        // Mark as downloaded and save the update
+        request.setDownloaded(true);
+        documentRequestService.saveRequest(request);
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + request.getDocumentName() + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
@@ -116,17 +120,35 @@ public ResponseEntity<String> approveRequest(@PathVariable Long id) {
 
 
     //  6. Reject Request
+//    @PutMapping("/{id}/reject")
+//    public ResponseEntity<String> rejectRequest(@PathVariable Long id) {
+//        try {
+//            documentRequestService.updateRequestStatusById(id, 3);// Will send rejection email
+//
+//            return ResponseEntity.ok("❌ Request rejected and email sent.");
+//        } catch (RuntimeException e) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request not found");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("❌ Error rejecting request: " + e.getMessage());
+//        }
+//    }
     @PutMapping("/{id}/reject")
-    public ResponseEntity<String> rejectRequest(@PathVariable Long id) {
+    public ResponseEntity<String> rejectRequest(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> payload) {
         try {
-            documentRequestService.updateRequestStatusById(id, 3);  // ✅ Will send rejection email
+            String reason = payload.get("reason");
+            documentRequestService.updateRequestStatusById(id, 3); // Will send rejection email
+            documentRequestService.updateRejectionReason(id, reason);
             return ResponseEntity.ok("❌ Request rejected and email sent.");
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Request not found");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("❌ Error rejecting request: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("❌ Error rejecting request: " + e.getMessage());
         }
     }
+
 
     // 7. Generate & Upload PDF (admin)
 //    @PostMapping("/{id}/generate-and-upload")
@@ -213,7 +235,7 @@ public ResponseEntity<String> approveRequest(@PathVariable Long id) {
             request.setDocumentTypeStored("application/pdf");
           // s request.setDocumentType(request.getDocumentType());
             request.setPdfGenerated(true);
-            // 🔥 Save it to DB
+            // Save it to DB
             documentRequestService.saveRequest(request);
 
             return ResponseEntity.ok("✅ PDF generated successfully for request ID: " + id);
@@ -287,6 +309,37 @@ public ResponseEntity<String> approveRequest(@PathVariable Long id) {
         documentRequestService.saveRequest(request);
         return ResponseEntity.ok("📤 Document finalized internally (admin only).");
     }
+
+
+    @GetMapping("/history/{prnNo}")
+    public ResponseEntity<List<DocumentRequest>> getHistory(@PathVariable String prnNo) {
+        List<DocumentRequest> history = documentRequestService.getHistoryByPrnNo(prnNo);
+        return ResponseEntity.ok(history);
+    }
+
+    @PostMapping("/{id}/reapply")
+    public ResponseEntity<String> reapplyDocumentRequest(@PathVariable Long id) {
+        try {
+            documentRequestService.reapplyRequest(id); // Call your service method
+            return ResponseEntity.ok("Reapplied successfully.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Reapply failed: " + e.getMessage());
+        }
+    }
+
+    private String rejectionReason;
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+
+
+
 
 
 

@@ -247,6 +247,36 @@ public class DocumentRequestService {
             default:
                 throw new IllegalArgumentException("Unsupported document type: " + type);
         }
+
+
+
+
+
+
     }
+
+    public List<DocumentRequest> getHistoryByPrnNo(String prnNo)
+    {
+        return documentRequestRepository.findHistoryForStudent(prnNo);
+    }
+    public void reapplyRequest(Long id) {
+        Optional<DocumentRequest> optionalRequest = documentRequestRepository.findById(id);
+        if (optionalRequest.isPresent()) {
+            DocumentRequest request = optionalRequest.get();
+            request.setStatus(1); // Set status back to Pending
+            documentRequestRepository.save(request);
+        } else {
+            throw new RuntimeException("Document request not found with ID: " + id);
+        }
+    }
+    public void updateRejectionReason(Long id, String reason) {
+        DocumentRequest request = documentRequestRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Request not found"));
+
+        request.setRejectionReason(reason);
+        documentRequestRepository.save(request);
+    }
+
+
 
 }
