@@ -4,7 +4,9 @@ import com.example.demo_pranali.Model.CreateAccount;
 import com.example.demo_pranali.Model.DocumentRequest;
 import com.example.demo_pranali.repository.DocumentRequestRepository;
 import com.example.demo_pranali.service.DocumentRequestService;
+import com.example.demo_pranali.service.EmailService;
 import com.example.demo_pranali.service.PdfGeneratorService;
+import com.example.demo_pranali.service.TeacherService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +19,8 @@ import java.util.*;
 @RequestMapping("/document-requests")
 @CrossOrigin(origins = "http://localhost:5173") // Adjust for frontend
 public class DocumentRequestController {
-
+    @Autowired
+    private EmailService emailService;
     @Autowired
     private DocumentRequestService documentRequestService;
 
@@ -27,7 +30,8 @@ public class DocumentRequestController {
     @Autowired
     private PdfGeneratorService pdfGeneratorService;
 
-
+    @Autowired
+    private TeacherService teacherService;
     //  1. Create Document Request (with optional file upload)
     @PostMapping("/create")
     public ResponseEntity<DocumentRequest> createRequest(
@@ -309,7 +313,20 @@ public ResponseEntity<String> approveRequest(@PathVariable Long id) {
         documentRequestService.saveRequest(request);
         return ResponseEntity.ok("📤 Document finalized internally (admin only).");
     }
+    @PostMapping("/send-lor")
+    public ResponseEntity<String> sendLorRequest(@RequestParam String studentName,
+                                                 @RequestParam String teacherName,
+                                                 @RequestParam MultipartFile resume) throws IOException {
 
+        String toEmail = teacherService.getEmailByTeacherName(teacherName);
+        if (toEmail == null) return ResponseEntity.badRequest().body("Invalid Teacher Selected");
+
+        // Send mail with attachment
+        emailService.sendLorRequestEmail(toEmail, studentName);
+
+
+        return ResponseEntity.ok("LOR Request sent successfully.");
+    }
 
     @GetMapping("/history/{prnNo}")
     public ResponseEntity<List<DocumentRequest>> getHistory(@PathVariable String prnNo) {

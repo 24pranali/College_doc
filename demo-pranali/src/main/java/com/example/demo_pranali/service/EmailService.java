@@ -4,6 +4,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+//import org.springframework.mail.javamail.MimeMessageHelper;
+//import javax.mail.internet.MimeMessage;
+//import org.springframework.web.multipart.MultipartFile;
+
 @Service
 public class EmailService {
     private final JavaMailSender mailSender;
@@ -28,6 +32,29 @@ public class EmailService {
           e.printStackTrace();
       }
     }
+//    public void sendLorRequestEmailWithAttachment(String toEmail, String studentName, MultipartFile resumeFile) {
+//        try {
+//            MimeMessage message = mailSender.createMimeMessage();
+//            MimeMessageHelper helper = new MimeMessageHelper(message, true);  // true = multipart
+//
+//            helper.setFrom(fromEmail);
+//            helper.setTo(toEmail);
+//            helper.setSubject("LOR Request from Student");
+//
+//            String body = "Dear Professor,\n\nStudent " + studentName + " has requested a Letter of Recommendation. The resume is attached.\n\nRegards,\nPortal Team";
+//
+//            helper.setText(body);
+//
+//            // Attach Resume
+//            helper.addAttachment(resumeFile.getOriginalFilename(), resumeFile);
+//
+//            mailSender.send(message);
+//        } catch (Exception e) {
+//            System.err.println("❌ Failed to send email with attachment: " + e.getMessage());
+//            e.printStackTrace();
+//        }
+//    }
+
     public void sendRequestStatusEmail(String toEmail, String studentName, String documentType, boolean approved) {
         String subject = approved
                 ? "✅ Your document request has been approved"
@@ -38,6 +65,11 @@ public class EmailService {
                 : "Dear " + studentName + ",\n\nUnfortunately, your request for \"" + documentType + "\" has been rejected.\nPlease log in to view the reason or contact the admin.\n\nRegards,\nAdmin Team";
 
         sendEmail(toEmail, subject, message);  // Reuse existing method
+    }
+    public void sendLorRequestEmail(String toEmail, String studentName) {
+        String subject = "LOR Request from Student";
+        String message = "Dear Professor,\n\nStudent " + studentName + " has requested a Letter of Recommendation. The resume is attached.\n\nRegards,\nPortal Team";
+        sendEmail(toEmail, subject, message);
     }
 
     // For sending OTP during account creation
